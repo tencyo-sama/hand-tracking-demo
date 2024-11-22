@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1"> 
 
   <!-- 3つのライブラリを読み込む -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -11,17 +12,14 @@
 <body>
   <div class="container">
     
-    <!-- Webカメラの映像（入力） -->
-    <video id="input"></video>
-    
     <!--  認識した手の形状を可視化した映像（出力）  -->
     <canvas id="output" width="600" height="400"></canvas>
   </div>
-  <button id="start">start</button>
-  <button id="stop">stop</button>
+  <button id="start" style="padding: 15px 30px; font-size: 18px; margin: 10px;">start</button>
+  <button id="stop" style="padding: 15px 30px; font-size: 18px; margin: 10px;">stop</button>
   
   <script>
-    const video = document.getElementById('input');
+    const video = document.getElementById('input'); // input 要素は削除しましたが、JavaScript からは参照されるため、変数自体は残します。
     const canvas = document.getElementById('output');
     const ctx = canvas.getContext('2d');
     
@@ -34,7 +32,7 @@
     //カメラからの映像をhands.jsで使えるようにする
     const camera = new Camera(video, {
       onFrame: async () => {
-        await hands.send({image: video});
+        await hands.send({image: video}); 
       },
       width: 600,
       height: 400
@@ -46,11 +44,37 @@
         minDetectionConfidence: 0.5, //手を検出するための信頼値(0.0~1.0)
         minTrackingConfidence: 0.5   //ランドマーク追跡の信頼度(0.0~1.0)
     });
+    
+    function isThumbsUp(handLandmarks) {
+      const thumbTip = handLandmarks[4];
+      const indexTip = handLandmarks[8];
+      const middleTip = handLandmarks[12];
+      const ringTip = handLandmarks[16];
+      const pinkyTip = handLandmarks[20];
+
+      // 親指が上向きで、他の指が曲がっているかどうかを判定
+      if (thumbTip.y < indexTip.y && thumbTip.y < middleTip.y && thumbTip.y < ringTip.y && thumbTip.y < pinkyTip.y &&
+          indexTip.y > indexTip.y - 0.1 && middleTip.y > middleTip.y - 0.1 && ringTip.y > ringTip.y - 0.1 && pinkyTip.y > pinkyTip.y - 0.1) {
+        return true;
+      }
+      return false;
+    }
+
+    function drawOkMessage(ctx, isOk) {
+      if (isOk) {
+        ctx.font = "30px Arial";
+        ctx.fillStyle = "red";
+        ctx.textAlign = "center";
+        ctx.fillText("OK！", canvas.width / 2, canvas.height - 20); // カメラ画面の下に表示
+      }
+    }
 
     //形状認識した結果の取得
     hands.onResults(results => {
       ctx.clearRect(0,0,canvas.width,canvas.height);
       ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
+
+      let okDetected = false; // OK！表示フラグ
       
       if(results.multiHandLandmarks) {
         results.multiHandLandmarks.forEach(marks => {
@@ -59,8 +83,14 @@
 
           // 赤色でランドマークを可視化
           drawLandmarks(ctx, marks, {color: '#f00'});
-        })
+
+          if (isThumbsUp(marks)) {
+            okDetected = true;
+          }
+        });
       }
+
+      drawOkMessage(ctx, okDetected); // OK！表示
     });
 
     
