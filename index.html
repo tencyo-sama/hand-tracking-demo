@@ -12,13 +12,17 @@
 <body>
   <div class="container">
     
-    <!--  認識した手の形状を可視化した映像（出力）  -->
+    <!-- 認識した手の形状を可視化した映像（出力） -->
     <canvas id="output" width="600" height="400"></canvas>
+    
+    <!-- カメラからの映像を受け取るための非表示のvideo要素 -->
+    <video id="input" style="display: none;"></video> 
   </div>
   <button id="start" style="padding: 15px 30px; font-size: 18px; margin: 10px;">start</button>
   <button id="stop" style="padding: 15px 30px; font-size: 18px; margin: 10px;">stop</button>
   
   <script>
+    const video = document.getElementById('input');
     const canvas = document.getElementById('output');
     const ctx = canvas.getContext('2d');
     
@@ -29,9 +33,9 @@
     const hands = new Hands(config);
 
     //カメラからの映像をhands.jsで使えるようにする
-    const camera = new Camera(canvas, { // video 要素の代わりに canvas 要素を渡すように修正
+    const camera = new Camera(video, {
       onFrame: async () => {
-        await hands.send({image: canvas}); // video 要素の代わりに canvas 要素を渡すように修正
+        await hands.send({image: video});
       },
       width: 600,
       height: 400
