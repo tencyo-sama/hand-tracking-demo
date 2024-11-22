@@ -19,7 +19,6 @@
   <button id="stop" style="padding: 15px 30px; font-size: 18px; margin: 10px;">stop</button>
   
   <script>
-    const video = document.getElementById('input'); // input 要素は削除しましたが、JavaScript からは参照されるため、変数自体は残します。
     const canvas = document.getElementById('output');
     const ctx = canvas.getContext('2d');
     
@@ -30,9 +29,9 @@
     const hands = new Hands(config);
 
     //カメラからの映像をhands.jsで使えるようにする
-    const camera = new Camera(video, {
+    const camera = new Camera(canvas, { // video 要素の代わりに canvas 要素を渡すように修正
       onFrame: async () => {
-        await hands.send({image: video}); 
+        await hands.send({image: canvas}); // video 要素の代わりに canvas 要素を渡すように修正
       },
       width: 600,
       height: 400
